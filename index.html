@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Acadêmico</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; display: flex; background: #f4f6f9; }
+    aside {
+      width: 240px; background: #0d47a1; color: #fff; height: 100vh;
+      padding: 20px; position: fixed;
+    }
+    aside h2 { text-align: center; margin-bottom: 30px; }
+    aside a {
+      display: block; color: #fff; text-decoration: none;
+      padding: 10px; border-radius: 6px; margin-bottom: 10px;
+    }
+    aside a:hover, aside a.active { background: #1565c0; }
+    main { margin-left: 240px; padding: 30px; width: 100%; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h1 { color: #0d47a1; }
+    .cards { display: flex; gap: 20px; }
+    .card {
+      background: #fff; padding: 20px; border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); flex: 1;
+    }
+    form { background: #fff; padding: 20px; border-radius: 10px; max-width: 500px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input {
+      width: 100%; padding: 10px; margin-top: 5px;
+      border-radius: 6px; border: 1px solid #ccc;
+    }
+    input:focus { outline: none; border-color: #0d47a1; }
+    button {
+      margin-top: 15px; padding: 10px 15px;
+      background: #0d47a1; color: #fff;
+      border: none; border-radius: 6px; cursor: pointer;
+    }
+    button:hover { opacity: .9; }
+    table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      border-radius: 10px; overflow: hidden;
+    }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #e3f2fd; }
+    .actions button { margin-right: 5px; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h2>Acadêmico</h2>
+    <a href="#" class="active" onclick="showPage('dashboard', this)">Dashboard</a>
+    <a href="#" onclick="showPage('cadastro', this)">Cadastrar Aluno</a>
+    <a href="#" onclick="showPage('lista', this)">Alunos</a>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="page active">
+      <h1>Dashboard</h1>
+      <div class="cards">
+        <div class="card">Total de Alunos: <strong id="totalAlunos">0</strong></div>
+        <div class="card">Turmas: <strong>3</strong></div>
+        <div class="card">Matérias: <strong>8</strong></div>
+      </div>
+    </section>
+
+    <!-- CADASTRO -->
+    <section id="cadastro" class="page">
+      <h1>Cadastrar Aluno</h1>
+      <form onsubmit="addAluno(event)">
+        <label>Nome</label>
+        <input required id="nome" />
+        <label>Turma</label>
+        <input required id="turma" />
+        <label>Série</label>
+        <input required id="serie" />
+        <button>Salvar Aluno</button>
+      </form>
+    </section>
+
+    <!-- LISTAGEM -->
+    <section id="lista" class="page">
+      <h1>Alunos Cadastrados</h1>
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>Turma</th><th>Série</th><th>Ações</th></tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+      <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.4); align-items:center; justify-content:center; z-index:999;">
+        <div style="background:#fff; padding:20px; border-radius:10px; max-width:500px; width:100%;">
+          <h1 style="color:#0d47a1; margin-top:0;">Editar Aluno</h1>
+          <form onsubmit="saveEdit(event)">
+            <input type="hidden" id="editIndex" />
+            <label>Nome</label>
+            <input required id="editNome" />
+            <label>Turma</label>
+            <input required id="editTurma" />
+            <label>Série</label>
+            <input required id="editSerie" />
+            <button>Atualizar Aluno</button>
+            <button type="button" onclick="closeEdit()" style="background:#ccc;color:#000;">Cancelar</button>
+          </form>
+        </div>
+      </div>
+        </form>
+      </div>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    let alunos = [];
+
+    function showPage(id, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('aside a').forEach(a => a.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function addAluno(e) {
+      e.preventDefault();
+      const aluno = {
+        nome: nome.value,
+        turma: turma.value,
+        serie: serie.value
+      };
+      alunos.push(aluno);
+      nome.value = turma.value = serie.value = '';
+      updateTable();
+      showPage('lista', document.querySelectorAll('aside a')[2]);
+    }
+
+    function updateTable() {
+      const tbody = document.getElementById('tabela');
+      tbody.innerHTML = '';
+      alunos.forEach((a, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${a.nome}</td>
+            <td>${a.turma}</td>
+            <td>${a.serie}</td>
+            <td class="actions">
+              <button onclick="editAluno(${i})">Editar</button>
+              <button onclick="removeAluno(${i})">Excluir</button>
+            </td>
+          </tr>`;
+      });
+      totalAlunos.textContent = alunos.length;
+    }
+
+    function editAluno(i) {
+      const a = alunos[i];
+      editIndex.value = i;
+      editNome.value = a.nome;
+      editTurma.value = a.turma;
+      editSerie.value = a.serie;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEdit() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function saveEdit(e) {
+      e.preventDefault();
+      const i = editIndex.value;
+      alunos[i] = {
+        nome: editNome.value,
+        turma: editTurma.value,
+        serie: editSerie.value
+      };
+      updateTable();
+      closeEdit();
+    }
+
+    function removeAluno(i) {
+      if (confirm('Deseja excluir este aluno?')) {
+        alunos.splice(i, 1);
+        updateTable();
+      }
+    }
+  </script>
+</body>
+</html>
